@@ -24,17 +24,21 @@ class ImageAnalyzer(object):
         return self._average_color
 
     def dominant_colors(self, n_colors=5):
+        # See: https://stackoverflow.com/a/43111221/714478
         pixels = numpy.float32(self.image_data).reshape((-1, 3))
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 200, .1)
         flags = cv2.KMEANS_RANDOM_CENTERS
         _, labels, centroids = cv2.kmeans(pixels, n_colors, None, criteria, 10, flags)
         palette = numpy.uint8(centroids) # This might be all we need
         # quantized = palette[labels.flatten()].reshape(self.image_data.shape)
-        # # return palette[numpy.argmax(itemfreq(labels)[:, -1])]
+        # return palette[numpy.argmax(itemfreq(labels)[:, -1])]
         return palette
+
+        # return palette
         # TODO: above doesn't seem to be working quite right
 
     def viz(self, n_colors=5, height=100, width=200):
+        # See: https://stackoverflow.com/a/12890573/714478
         colors = self.dominant_colors(n_colors)
         image = numpy.zeros((height, width, 3), numpy.uint8)
         d = 1/len(colors)
