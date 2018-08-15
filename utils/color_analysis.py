@@ -1,6 +1,11 @@
 import cv2
 import numpy as np
 
+#
+# Pass the path to an image to this script to visualize the dominant colors in
+# the image. See the viz() method for additional options.
+#
+
 class ImageAnalyzer(object):
     def __init__(self, image_path):
         self.image_path = image_path
@@ -21,7 +26,6 @@ class ImageAnalyzer(object):
         return self._average_color
 
     def dominant_colors(self, n_colors=5):
-        # See: https://stackoverflow.com/a/43111221/714478
         # See: https://docs.opencv.org/3.4.2/d1/d5c/tutorial_py_kmeans_opencv.html
         arr = np.float32(self.image_data) # a 3d ndarray
         pixels = arr.reshape((-1, 3))
@@ -93,8 +97,15 @@ class ImageAnalyzer(object):
             image[:, offset:width] = colors[i][0]
         return image
 
-# TODO: should be a param arg
-IMAGE_PATH = '/Users/jstroop/workspace/colorfun/images/0034.jpg'
 if __name__ == '__main__':
-    analyzer = ImageAnalyzer(IMAGE_PATH)
-    analyzer.viz()
+    # TODO: Cheap CLI, will do more later. 
+    from os.path import dirname
+    from os.path import join
+    from os.path import realpath
+    from sys import argv
+    try:
+        image_path = argv[1]
+    except IndexError:
+        image_path = realpath(join(dirname(realpath(__file__)), '../samples/01_in.jpg'))
+    analyzer = ImageAnalyzer(image_path)
+    analyzer.viz(n_colors=8)
