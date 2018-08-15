@@ -1,5 +1,4 @@
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 
 class ImageAnalyzer(object):
@@ -54,21 +53,42 @@ class ImageAnalyzer(object):
 
         return pallet_by_freq
 
-    def viz(self, n_colors=5, height=100, width=200):
+    # def viz(self, n_colors=5, height=100, width=200):
+    #     # See: https://stackoverflow.com/a/12890573/714478
+    #     colors = self.dominant_colors(n_colors)
+    #     image = np.zeros((height, width, 3), np.uint8)
+    #     d = 1/len(colors)
+    #     for i in range(len(colors)):
+    #         print(str(int(i*d*width)) + " : " + str(colors[i]))
+    #         image[:, int(i*d*width):width] = colors[i]
+    #     cv2.imshow('image', image)
+    #     cv2.waitKey(0)
+    #     cv2.destroyAllWindows()
+
+    def viz(self, n_colors=5, height=100, width=400, weighted=True):
         # See: https://stackoverflow.com/a/12890573/714478
         colors = self.dominant_colors(n_colors)
         image = np.zeros((height, width, 3), np.uint8)
-        d = 1/len(colors)
-        for i in range(len(colors)):
-            print(str(int(i*d*width)) + " : " + str(colors[i]))
-            image[:, int(i*d*width):width] = colors[i]
+        if weighted:
+            pass
+        else:
+            image = ImageAnalyzer._viz_unweighted(image, colors, width)
         cv2.imshow('image', image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
+    @staticmethod
+    def _viz_unweighted(image, colors, width):
+        section_width = 1/len(colors)
+        for i in range(len(colors)):
+            offset = int(i*section_width*width)
+            print(str(offset) + " : " + str(colors[i]))
+            image[:, offset:width] = colors[i][0]
+        return image
+
 
 # TODO: should be a param arg
-IMAGE_PATH = '/Users/jstroop/workspace/colorfun/images/0093.jpg'
+IMAGE_PATH = '/Users/jstroop/workspace/colorfun/images/0034.jpg'
 if __name__ == '__main__':
     analyzer = ImageAnalyzer(IMAGE_PATH)
-    print(analyzer.dominant_colors())
+    print(analyzer.viz(weighted=False))
