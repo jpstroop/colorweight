@@ -1,14 +1,14 @@
-# Color Fun
+# ColorWeight
 
-Indexing PUL images by their dominant colors. Departs from [here](https://stackoverflow.com/a/43111221/714478).
+Visualize (and eventually index) images by their dominant colors.
 
 ## Installation
 
- * Set up a `virtualenv` to use python 3.6.0 and activate it.
- * Install [Pipenv](https://packaging.python.org/tutorials/managing-dependencies/#installing-pipenv): `pip install pipenv`
- * Install dependencies
- * Do this: https://stackoverflow.com/a/21789908/714478
+ * Install [Pipenv](https://packaging.python.org/tutorials/managing-dependencies/#installing-pipenv): `brew install pipenv`
+ * Install dependencies: `pipenv install`
+ * Activate the environment: `pipenv shell`
+ * Play with `utils/color_analysis.py`
 
 ## Download some Images
 
-See `utils/image_fetch.py`.
+See `__main__` in `utils/image_fetch.py`.
