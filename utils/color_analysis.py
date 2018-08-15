@@ -23,16 +23,16 @@ class ImageAnalyzer(object):
 
     def dominant_colors(self, n_colors=5):
         # See: https://stackoverflow.com/a/43111221/714478
+        # See: https://docs.opencv.org/3.4.2/d1/d5c/tutorial_py_kmeans_opencv.html
         arr = np.float32(self.image_data) # a 3d ndarray
         pixels = arr.reshape((-1, 3))
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 200, 1.0)
         flags = cv2.KMEANS_RANDOM_CENTERS
         _, labels, centroids = cv2.kmeans(pixels, n_colors, None, criteria, 10, flags)
 
-        # https://docs.opencv.org/3.4.2/d1/d5c/tutorial_py_kmeans_opencv.html
         # "Labels will have the same size as that of test data where each data
         # will be labelled as '0','1','2' etc. depending on their centroids."
-        # "labels" are indicies of centroids, and in our case the centroids
+        # i.e. "labels" are indicies of centroids, and in our case the centroids
         # are colors expressed as [B,G,R].
 
         # How often does each unique label occur?
@@ -53,20 +53,6 @@ class ImageAnalyzer(object):
         pallet_by_freq = [(palette[f[0]], f[1]) for f in freq_sorted]
 
         return pallet_by_freq
-
-        # WORKS-ish###################
-        # pixels = np.float32(self.image_data).reshape((-1, 3))
-        # criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 200, .1)
-        # flags = cv2.KMEANS_RANDOM_CENTERS
-        # _, labels, centroids = cv2.kmeans(pixels, n_colors, None, criteria, 10, flags)
-        # palette = np.uint8(centroids) # This might be all we need
-        # # quantized = palette[labels.flatten()].reshape(self.image_data.shape)
-        # # return palette[np.argmax(itemfreq(labels)[:, -1])]
-        # return palette
-        ################################
-
-        # return palette
-        # TODO: above doesn't seem to be working quite right
 
     def viz(self, n_colors=5, height=100, width=200):
         # See: https://stackoverflow.com/a/12890573/714478
