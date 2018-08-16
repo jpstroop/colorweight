@@ -1,10 +1,12 @@
 import cv2
 import numpy as np
+from json import dumps
 
 #
 # Pass the path to an image to this script to visualize the dominant colors in
 # the image. See the viz() method for additional options.
 #
+DEFAULT_N_COLORS = 5
 
 class ImageAnalyzer(object):
     def __init__(self, image_path):
@@ -25,7 +27,7 @@ class ImageAnalyzer(object):
                                     for i in range(self.image_data.shape[-1])]
         return self._average_color
 
-    def dominant_colors(self, n_colors=5):
+    def dominant_colors(self, n_colors=DEFAULT_N_COLORS):
         # See: https://docs.opencv.org/3.4.2/d1/d5c/tutorial_py_kmeans_opencv.html
         arr = np.float32(self.image_data) # a 3d ndarray
         pixels = arr.reshape((-1, 3))
@@ -49,11 +51,9 @@ class ImageAnalyzer(object):
         palette = np.uint8(centroids)
         # Replace the labels with the value from the palette/centroids
         # giving us: [([B,G,R], freq), ([B,G,R], freq), ...]
-        pallet_by_freq = [(palette[f[0]], f[1]) for f in freq_sorted]
+        return [(palette[f[0]], f[1]) for f in freq_sorted]
 
-        return pallet_by_freq
-
-    def viz(self, n_colors=5, height=100, width=400, weighted=True, debug=False):
+    def viz(self, n_colors=DEFAULT_N_COLORS, height=100, width=400, weighted=True, debug=False):
         # See: https://stackoverflow.com/a/12890573/714478
         colors = self.dominant_colors(n_colors)
         image = np.zeros((height, width, 3), np.uint8)
@@ -62,6 +62,21 @@ class ImageAnalyzer(object):
         else:
             image = ImageAnalyzer._viz_unweighted(image, colors, width, debug)
         ImageAnalyzer._show(image)
+
+    def json(self, n_colors=DEFAULT_N_COLORS):
+        print(dumps(self._dominant_colors_list(n_colors=n_colors), indent=2, sort_keys=True))
+
+    def _dominant_colors_list(self, n_colors=DEFAULT_N_COLORS):
+        colors = self.dominant_colors(n_colors=n_colors)
+        total_pixels = sum([t[1] for t in colors])
+        return [ImageAnalyzer._format_color_for_json(c, total_pixels) for c in colors]
+
+    @staticmethod
+    def _format_color_for_json(color_entry, total_pixels):
+        b, g, r = color_entry[0]
+        rgb = list(map(int, [r, g, b])) # reformatted the way most would want
+        volume = color_entry[1] / total_pixels
+        return { 'rgb' : rgb, 'volume' : float(volume) }
 
     @staticmethod
     def _show(image, label='[Image]'):
@@ -98,7 +113,7 @@ class ImageAnalyzer(object):
         return image
 
 if __name__ == '__main__':
-    # TODO: Cheap CLI, will do more later. 
+    # TODO: Cheap CLI, will do more later.
     from os.path import dirname
     from os.path import join
     from os.path import realpath
@@ -108,4 +123,4 @@ if __name__ == '__main__':
     except IndexError:
         image_path = realpath(join(dirname(realpath(__file__)), '../samples/01_in.jpg'))
     analyzer = ImageAnalyzer(image_path)
-    analyzer.viz(n_colors=8)
+    analyzer.json()
