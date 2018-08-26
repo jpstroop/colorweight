@@ -8,22 +8,25 @@ from argparse import Action
 from argparse import ArgumentParser
 from argparse import SUPPRESS
 from color_analysis import ImageAnalyzer
+from os.path import abspath
+from os.path import dirname
+from os.path import isdir
 
-DESCRIPTION="""
-A simple utility for analyzing images by their color.
-"""
+DESCRIPTION='A simple command line utility for analyzing images by their color.'
 
 DEFAULT_WIDTH = 400
 DEFAULT_HEIGHT = 100
 
+FORMAT_CHOICES = ['png', 'json']
+
 HELP = {
 
-    'image' : """ The path to an image on the file system or an HTTP(S) URI.
+    'image' : """The path to an image on the file system or an HTTP(S) URI.
 If the arguement is a URI and does not appear to resolve to an image (by file
 extension), an IIIF Image API service is assumed.""",
 
-    'output' : """The path for the output file. The format will be determined by the file
-extenstion: '.json' or '.png' are supported.""",
+    'output' : """The path for the output file. The format will be determined
+by the file extenstion. '.json' or '.png' are supported.""",
 
     'format' : """If --output is not specified, the format to dump to stdout.
 'json' (default) or 'png' are supported.""",
@@ -35,11 +38,15 @@ extenstion: '.json' or '.png' are supported.""",
 three colors (default: 5)"""
 }
 
-class WHAction(Action):
+# TODO: How to return nice looking errors to stderr when we raise execeptions
+# in custom Actions?
 
+class WHAction(Action):
+    'Parse the WxH geometry into width and height'
     DEFAULT = '{}x{}'.format(DEFAULT_WIDTH, DEFAULT_HEIGHT)
 
     def __init__(self, option_strings, dest, **kwargs):
+        # TODO: can we set defaults here, and will __call__ then override?
         super(WHAction, self).__init__(option_strings, dest,
             default=WHAction.DEFAULT, type=str, metavar='WxH',
             help=HELP['geometry'], **kwargs)
@@ -48,6 +55,28 @@ class WHAction(Action):
         w, h = map(int, map(str.strip, values.split('x')))
         setattr(namespace, 'width', w)
         setattr(namespace, 'height', h)
+
+class OutputFormatAction(Action):
+    'Set format based on the output path when --output is specified.'
+    def __init__(self, option_strings, dest, **kwargs):
+        super(OutputFormatAction, self).__init__(option_strings, dest,
+            type=str, metavar='PATH', help=HELP['output'], **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        fmt = values.split('.')[-1]
+        if fmt not in FORMAT_CHOICES:
+            m = '{} format is not supported ({})'.format(fmt, FORMAT_CHOICES)
+            raise ValueError(m)
+        # self._check_exists_and_writable(abspath(values))
+        setattr(namespace, 'format', fmt)
+
+    # TODO: do we need to check that the path is writable / exists, etc.? Or
+    # are upstream errors good enough?
+    # def _check_exists_and_writable(self, path):
+    #     d = dirname(path)
+    #     if not isdir(d):
+    #         m = 'Specified output directory ({}/) does not exist or is not a directory'.format(d)
+    #         raise ValueError(m)
 
 class ColorWeightCLI(object):
 
@@ -58,8 +87,9 @@ class ColorWeightCLI(object):
 
         # Optional, mutually exclusive:
         group = parser.add_mutually_exclusive_group()
-        group.add_argument('-o', '--output', metavar='PATH', help=HELP['output'])
-        group.add_argument('-f', '--format', default='json', choices=['png', 'json'], help=HELP['format'])
+        group.add_argument('-f', '--format', default='json',
+                choices=FORMAT_CHOICES, help=HELP['format'])
+        group.add_argument('-o', '--output', action=OutputFormatAction)
 
         # Optional
         parser.add_argument('-g', '--geometry', action=WHAction)
@@ -76,7 +106,7 @@ class ColorWeightCLI(object):
 
     def _tidy_and_default_geometry(self, args):
         # TODO:
-        # Seems lame that we have to do this but WHAction is only __call__ed if
+        # Seems lame that we have to do this, but WHAction is only __call__ed if
         # a -g / --geometry arg is passed. Confirm there's not a way to always
         # have this called WHAction called. Custom actions seem kind of
         # pointless otherwise.
