@@ -4,6 +4,7 @@
 # Command line interface for ./color_analysis.py
 #
 
+from argparse import Action
 from argparse import ArgumentParser
 from argparse import SUPPRESS
 from color_analysis import ImageAnalyzer
@@ -11,6 +12,9 @@ from color_analysis import ImageAnalyzer
 DESCRIPTION="""
 A simple utility for analyzing images by their color.
 """
+
+DEFAULT_WIDTH = 400
+DEFAULT_HEIGHT = 100
 
 HELP = {
 
@@ -25,18 +29,25 @@ extenstion: '.json' or '.png' are supported.""",
 'json' (default) or 'png' are supported.""",
 
     'geometry' : """The width and height of the output image. Ignored if
---output is json. (default: 400x100)""",
+--output is json. (default: {}x{})""".format(DEFAULT_WIDTH, DEFAULT_HEIGHT),
 
     'colors' : """The number of colors to report, e.g. 3 will report the top
 three colors (default: 5)"""
-
-#   -f, --format
-#   -g, --geometry  "[W]x[H]" the width and height of the output image. Ignored
-#                   if output is json. (default: 400x100)
-#   -c, --colors
-
-
 }
+
+class WHAction(Action):
+
+    DEFAULT = '{}x{}'.format(DEFAULT_WIDTH, DEFAULT_HEIGHT)
+
+    def __init__(self, option_strings, dest, **kwargs):
+        super(WHAction, self).__init__(option_strings, dest,
+            default=WHAction.DEFAULT, type=str, metavar='WxH',
+            help=HELP['geometry'], **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        w, h = map(int, map(str.strip, values.split('x')))
+        setattr(namespace, 'width', w)
+        setattr(namespace, 'height', h)
 
 class ColorWeightCLI(object):
 
@@ -51,21 +62,27 @@ class ColorWeightCLI(object):
         group.add_argument('-f', '--format', default='json', choices=['png', 'json'], help=HELP['format'])
 
         # Optional
-        parser.add_argument('-g', '--geometry', metavar='WxH', type=str, default='400x100', help=HELP['geometry'])
+        parser.add_argument('-g', '--geometry', action=WHAction)
         parser.add_argument('-c', '--colors', metavar='NUMBER', dest='n_colors', type=int, default=5, help=HELP['colors'])
         parser.add_argument('--debug', action='store_true', default=False, help=SUPPRESS)
 
         args = parser.parse_args()
 
-        args.w, args.h = map(int, map(str.strip, args.geometry.split('x')))
-        
+        self._tidy_and_default_geometry(args)
+
         if args.debug:
             print('[DEBUG] raw args: {}'.format(args))
-    #     self._set_props_from_args(args)
-    #     print(args.w)
-    #
-    # def _set_props_from_args(self, args):
-    #     'All the logic we explain in help'
+
+
+    def _tidy_and_default_geometry(self, args):
+        # TODO:
+        # Seems lame that we have to do this but WHAction is only __call__ed if
+        # a -g / --geometry arg is passed. Confirm there's not a way to always
+        # have this called WHAction called. Custom actions seem kind of
+        # pointless otherwise.
+        if not(hasattr(args, 'width')): args.width = DEFAULT_WIDTH
+        if not(hasattr(args, 'height')): args.height = DEFAULT_HEIGHT
+        del args.geometry
 
 
 
