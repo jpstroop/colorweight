@@ -87,36 +87,26 @@ class ColorWeightCLI(object):
 
         # Optional, mutually exclusive:
         group = parser.add_mutually_exclusive_group()
-        group.add_argument('-f', '--format', default='json',
-                choices=FORMAT_CHOICES, help=HELP['format'])
+        group.add_argument('-f', '--format', default='json', choices=FORMAT_CHOICES, help=HELP['format'])
         group.add_argument('-o', '--output', action=OutputFormatAction)
+
+        # Suppressed options; w/h are set by --geometry
+        # TODO: is there a way that we can make sure that the WHAction is
+        # always called? Seems we don't have access to the namespace until
+        # __call__ (i.e. not at __init__)
+        parser.add_argument('--width', default=DEFAULT_WIDTH, help=SUPPRESS)
+        parser.add_argument('--height', default=DEFAULT_HEIGHT, help=SUPPRESS)
+        parser.add_argument('--debug', action='store_true', default=False, help=SUPPRESS)
 
         # Optional
         parser.add_argument('-g', '--geometry', action=WHAction)
         parser.add_argument('-c', '--colors', metavar='NUMBER', dest='n_colors', type=int, default=5, help=HELP['colors'])
-        parser.add_argument('--debug', action='store_true', default=False, help=SUPPRESS)
 
         args = parser.parse_args()
-
-        self._tidy_and_default_geometry(args)
+        del args.geometry # use args.width and args.height going forward
 
         if args.debug:
             print('[DEBUG] raw args: {}'.format(args))
-
-
-    def _tidy_and_default_geometry(self, args):
-        # TODO:
-        # Seems lame that we have to do this, but WHAction is only __call__ed if
-        # a -g / --geometry arg is passed. Confirm there's not a way to always
-        # have this called WHAction called. Custom actions seem kind of
-        # pointless otherwise.
-        if not(hasattr(args, 'width')): args.width = DEFAULT_WIDTH
-        if not(hasattr(args, 'height')): args.height = DEFAULT_HEIGHT
-        del args.geometry
-
-
-
-
 
 if __name__ == '__main__':
     ColorWeightCLI()
