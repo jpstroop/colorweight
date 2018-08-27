@@ -12,6 +12,8 @@ from color_analysis import ImageAnalyzer
 from os.path import abspath
 from os.path import dirname
 from os.path import isdir
+from tempfile import TemporaryFile
+from errno import EACCES
 
 DESCRIPTION='A simple command line utility for analyzing images by their color.'
 
@@ -65,16 +67,29 @@ class OutputFormatAction(Action):
         if fmt not in FORMAT_CHOICES:
             m = '{} format is not supported ({})'.format(fmt, FORMAT_CHOICES)
             raise ArgumentError(self, m)
-        # self._check_exists_and_writable(abspath(values))
+        self._check_exists_and_writable(abspath(values))
         setattr(namespace, 'format', fmt)
 
-    # TODO: do we need to check that the path is writable / exists, etc.? Or
-    # are upstream errors good enough?
-    # def _check_exists_and_writable(self, path):
-    #     d = dirname(path)
-    #     if not isdir(d):
-    #         m = 'Specified output directory ({}/) does not exist or is not a directory'.format(d)
-    #         raise ValueError(m)
+    def _check_exists_and_writable(self, path):
+        d = dirname(path)
+        if not isdir(d):
+            m = 'Specified output directory ({}/) does not exist or is not a directory'.format(d)
+            raise ArgumentError(self, m)
+        if not OutputFormatAction._is_writeable(d):
+            m = 'Specified output directory ({}/) is not writeable'.format(d)
+            raise ArgumentError(self, m)
+
+    @staticmethod
+    def _is_writeable(path):
+        try:
+            testfile = TemporaryFile(dir=path)
+            testfile.close()
+        except OSError as e:
+            if e.errno == EACCES:
+                return False
+            else:
+                raise # unhandled until we know what else might come up
+        return True
 
 class ColorWeightCLI(object):
 
