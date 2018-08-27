@@ -5,6 +5,7 @@
 #
 
 from argparse import Action
+from argparse import ArgumentError
 from argparse import ArgumentParser
 from argparse import SUPPRESS
 from color_analysis import ImageAnalyzer
@@ -38,9 +39,6 @@ by the file extenstion. '.json' or '.png' are supported.""",
 three colors (default: 5)"""
 }
 
-# TODO: How to return nice looking errors to stderr when we raise execeptions
-# in custom Actions?
-
 class WHAction(Action):
     'Parse the WxH geometry into width and height'
     DEFAULT = '{}x{}'.format(DEFAULT_WIDTH, DEFAULT_HEIGHT)
@@ -66,7 +64,7 @@ class OutputFormatAction(Action):
         fmt = values.split('.')[-1]
         if fmt not in FORMAT_CHOICES:
             m = '{} format is not supported ({})'.format(fmt, FORMAT_CHOICES)
-            raise ValueError(m)
+            raise ArgumentError(self, m)
         # self._check_exists_and_writable(abspath(values))
         setattr(namespace, 'format', fmt)
 
