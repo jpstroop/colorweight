@@ -9,6 +9,7 @@ from argparse import ArgumentError
 from argparse import ArgumentParser
 from argparse import SUPPRESS
 from color_analysis import ImageAnalyzer # TODO: shoud be utils.color_analysis
+from cv2 import imwrite
 from errno import EACCES
 from json import dumps
 from os.path import abspath
@@ -39,7 +40,7 @@ by the file extenstion. '.json' or '.png' are supported.""",
     'geometry' : f"""The width and height of the output image. Ignored if
 --output is json. (default: {DEFAULT_WIDTH}x{DEFAULT_HEIGHT})""",
 
-    'colors' : """The number of colors to report, e.g. 3 will report the top
+    'colors' : """The number of colors to report, e.g. -c 3 will report the top
 three colors (default: 5)"""
 }
 
@@ -132,18 +133,21 @@ class ColorWeightCLI(object):
         # Args is an argparse.Namespace object. E.g.:
         # Namespace(debug=True, format='json', height=100, image='foo.png',
         #    n_colors=5, output=None, width=400)
-
-        # To File or Stdout?
-        outstream = stdout
-        if self.args.output is not None:
-            outstream = open(self.args.output, 'w')
-
         if self.args.format == 'json':
+            outstream = stdout
+            if self.args.output is not None:
+                outstream = open(self.args.output, 'w')
             data = analyzer.list(n_colors=self.args.n_colors)
             json_s = dumps(data, indent=2, sort_keys=True)
             print(json_s, file=outstream)
         else:
-            pass #TODO
+            image_data = analyzer.viz(n_colors=self.args.n_colors,
+                height=self.args.height, width=self.args.width)
+            if self.args.output is not None:
+                imwrite(self.args.output, image_data)
+            else: # Probably useless, but keeps CLI the API easy :-)
+                print(image_data.tostring())
+
         # JSON or Image?
 
 if __name__ == '__main__':

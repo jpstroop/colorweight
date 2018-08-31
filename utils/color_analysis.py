@@ -58,10 +58,10 @@ class ImageAnalyzer(object):
         colors = self.dominant_colors(n_colors)
         image = np.zeros((height, width, 3), np.uint8)
         if weighted:
-            image = ImageAnalyzer._viz_weighted(image, colors, width, debug)
+            pixels = ImageAnalyzer._viz_weighted(image, colors, width, debug)
         else:
-            image = ImageAnalyzer._viz_unweighted(image, colors, width, debug)
-        ImageAnalyzer._show(image)
+            pixels = ImageAnalyzer._viz_unweighted(image, colors, width, debug)
+        return pixels
 
     def list(self, n_colors=DEFAULT_N_COLORS):
         return self._dominant_colors_list(n_colors=n_colors)
