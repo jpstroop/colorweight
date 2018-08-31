@@ -63,8 +63,8 @@ class ImageAnalyzer(object):
             image = ImageAnalyzer._viz_unweighted(image, colors, width, debug)
         ImageAnalyzer._show(image)
 
-    def json(self, n_colors=DEFAULT_N_COLORS):
-        print(dumps(self._dominant_colors_list(n_colors=n_colors), indent=2, sort_keys=True))
+    def list(self, n_colors=DEFAULT_N_COLORS):
+        return self._dominant_colors_list(n_colors=n_colors)
 
     def _dominant_colors_list(self, n_colors=DEFAULT_N_COLORS):
         colors = self.dominant_colors(n_colors=n_colors)
@@ -75,8 +75,10 @@ class ImageAnalyzer(object):
     def _format_color_for_json(color_entry, total_pixels):
         b, g, r = color_entry[0]
         rgb = list(map(int, [r, g, b])) # reformatted the way most would want
-        volume = color_entry[1] / total_pixels
-        return { 'rgb' : rgb, 'volume' : float(volume) }
+        # Note that the volume is relative to the number of colors requested,
+        # and not the total number of colors in the image
+        relative_volume = color_entry[1] / total_pixels
+        return { 'rgb' : rgb, 'relative_volume' : float(relative_volume) }
 
     @staticmethod
     def _show(image, label='[Image]'):
@@ -96,8 +98,7 @@ class ImageAnalyzer(object):
             else:
                 section_width = int(colors[i][1] / total_pixels * width)
             if debug:
-                stmt = 'BGR: {}, Offset: {}, Section Width: {}'
-                print(stmt.format(colors[i][0], section_width, offset))
+                print(f'BGR: {colors[i][0]}, Offset: {section_width}, Section Width: {offest}')
             image[:, offset:width] = colors[i][0]
             offset = offset + section_width
         return image
@@ -108,7 +109,7 @@ class ImageAnalyzer(object):
         for i in range(len(colors)):
             offset = int(i*section_width*width)
             if debug:
-                print('BGR: {}, Offset: {}'.format(colors[i][0], offset))
+                print(f'BGR: {colors[i][0]}, Offset: {offset}')
             image[:, offset:width] = colors[i][0]
         return image
 

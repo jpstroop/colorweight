@@ -8,12 +8,14 @@ from argparse import Action
 from argparse import ArgumentError
 from argparse import ArgumentParser
 from argparse import SUPPRESS
-from color_analysis import ImageAnalyzer
+from color_analysis import ImageAnalyzer # TODO: shoud be utils.color_analysis
+from errno import EACCES
+from json import dumps
 from os.path import abspath
 from os.path import dirname
 from os.path import isdir
+from sys import stdout
 from tempfile import TemporaryFile
-from errno import EACCES
 
 DESCRIPTION='A simple command line utility for analyzing images by their color.'
 
@@ -34,21 +36,21 @@ by the file extenstion. '.json' or '.png' are supported.""",
     'format' : """If --output is not specified, the format to dump to stdout.
 'json' (default) or 'png' are supported.""",
 
-    'geometry' : """The width and height of the output image. Ignored if
---output is json. (default: {}x{})""".format(DEFAULT_WIDTH, DEFAULT_HEIGHT),
+    'geometry' : f"""The width and height of the output image. Ignored if
+--output is json. (default: {DEFAULT_WIDTH}x{DEFAULT_HEIGHT})""",
 
     'colors' : """The number of colors to report, e.g. 3 will report the top
 three colors (default: 5)"""
 }
 
-class WHAction(Action):
+class GeometryAction(Action):
     'Parse the WxH geometry into width and height'
-    DEFAULT = '{}x{}'.format(DEFAULT_WIDTH, DEFAULT_HEIGHT)
+    DEFAULT = f'{DEFAULT_WIDTH}x{DEFAULT_HEIGHT}'
 
     def __init__(self, option_strings, dest, **kwargs):
         # TODO: can we set defaults here, and will __call__ then override?
-        super(WHAction, self).__init__(option_strings, dest,
-            default=WHAction.DEFAULT, type=str, metavar='WxH',
+        super(GeometryAction, self).__init__(option_strings, dest,
+            default=GeometryAction.DEFAULT, type=str, metavar='WxH',
             help=HELP['geometry'], **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -65,18 +67,19 @@ class OutputFormatAction(Action):
     def __call__(self, parser, namespace, values, option_string=None):
         fmt = values.split('.')[-1]
         if fmt not in FORMAT_CHOICES:
-            m = '{} format is not supported ({})'.format(fmt, FORMAT_CHOICES)
+            m = f'{fmt} format is not supported ({FORMAT_CHOICES !r})'
             raise ArgumentError(self, m)
         self._check_exists_and_writable(abspath(values))
         setattr(namespace, 'format', fmt)
+        setattr(namespace, 'output', values)
 
     def _check_exists_and_writable(self, path):
         d = dirname(path)
         if not isdir(d):
-            m = 'Specified output directory ({}/) does not exist or is not a directory'.format(d)
+            m = f'Specified output directory ({d}/) does not exist or is not a directory'
             raise ArgumentError(self, m)
         if not OutputFormatAction._is_writeable(d):
-            m = 'Specified output directory ({}/) is not writeable'.format(d)
+            m = f'Specified output directory ({d}/) is not writeable'
             raise ArgumentError(self, m)
 
     @staticmethod
@@ -104,22 +107,45 @@ class ColorWeightCLI(object):
         group.add_argument('-o', '--output', action=OutputFormatAction)
 
         # Suppressed options; w/h are set by --geometry
-        # TODO: is there a way that we can make sure that the WHAction is
+        # TODO: is there a way that we can make sure that the GeometryAction is
         # always called? Seems we don't have access to the namespace until
         # __call__ (i.e. not at __init__)
+        # Update: See https://stackoverflow.com/questions/21583712/cause-pythons-argparse-to-execute-action-for-default
         parser.add_argument('--width', default=DEFAULT_WIDTH, help=SUPPRESS)
         parser.add_argument('--height', default=DEFAULT_HEIGHT, help=SUPPRESS)
         parser.add_argument('--debug', action='store_true', default=False, help=SUPPRESS)
 
         # Optional
-        parser.add_argument('-g', '--geometry', action=WHAction)
+        parser.add_argument('-g', '--geometry', action=GeometryAction)
         parser.add_argument('-c', '--colors', metavar='NUMBER', dest='n_colors', type=int, default=5, help=HELP['colors'])
 
         args = parser.parse_args()
         del args.geometry # use args.width and args.height going forward
 
         if args.debug:
-            print('[DEBUG] raw args: {}'.format(args))
+            print(f'[DEBUG] raw args: {args}')
+
+        self.args = args
+
+    def execute(self):
+        analyzer = ImageAnalyzer(self.args.image)
+        # Args is an argparse.Namespace object. E.g.:
+        # Namespace(debug=True, format='json', height=100, image='foo.png',
+        #    n_colors=5, output=None, width=400)
+
+        # To File or Stdout?
+        outstream = stdout
+        if self.args.output is not None:
+            outstream = open(self.args.output, 'w')
+
+        if self.args.format == 'json':
+            data = analyzer.list(n_colors=self.args.n_colors)
+            json_s = dumps(data, indent=2, sort_keys=True)
+            print(json_s, file=outstream)
+        else:
+            pass #TODO
+        # JSON or Image?
 
 if __name__ == '__main__':
-    ColorWeightCLI()
+    cli = ColorWeightCLI()
+    cli.execute()
