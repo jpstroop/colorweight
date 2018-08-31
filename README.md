@@ -46,8 +46,35 @@ See `util/color_analysis.py` for details and options.
  * Install [Pipenv](https://packaging.python.org/tutorials/managing-dependencies/#installing-pipenv): `brew install pipenv`
  * Install dependencies: `pipenv install`
  * Activate the environment: `pipenv shell`
- * Play with `utils/color_analysis.py`
+ * Check out the command line interface in `cw/utils/colorweight.py`
 
-## Download some Images
+    ```
+    usage: .cw/utils/colorweight.py [-h] [-f {png,json} | -o PATH] [-g WxH]
+                                      [-c NUMBER]
+                                      image
 
-See `__main__` in `utils/image_fetch.py`.
+    A simple command line utility for analyzing images by their color.
+
+    positional arguments:
+      image                 The path to an image on the file system or an HTTP(S)
+                            URI. If the arguement is a URI and does not appear to
+                            resolve to an image (by file extension), an IIIF Image
+                            API service is assumed.
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -f {png,json}, --format {png,json}
+                            If --output is not specified, the format to dump to
+                            stdout. 'json' (default) or 'png' are supported.
+      -o PATH, --output PATH
+                            The path for the output file. The format will be
+                            determined by the file extenstion. '.json' or '.png'
+                            are supported.
+      -g WxH, --geometry WxH
+                            The width and height of the output image. Ignored if
+                            --output is json. (default: 400x100)
+      -c NUMBER, --colors NUMBER
+                            The number of colors to report, e.g. -c 3 will report
+                            the top three colors (default: 5)
+    ```
+    ... or import and play with `cw/utils/color_analysis.py`
