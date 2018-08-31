@@ -8,7 +8,7 @@ from argparse import Action
 from argparse import ArgumentError
 from argparse import ArgumentParser
 from argparse import SUPPRESS
-from color_analysis import ImageAnalyzer # TODO: shoud be utils.color_analysis
+from color_analysis import ImageAnalyzer # TODO: shouldn't this be cw.utils.color_analysis ?
 from cv2 import imwrite
 from errno import EACCES
 from json import dumps
@@ -26,7 +26,6 @@ DEFAULT_HEIGHT = 100
 FORMAT_CHOICES = ['png', 'json']
 
 HELP = {
-
     'image' : """The path to an image on the file system or an HTTP(S) URI.
 If the arguement is a URI and does not appear to resolve to an image (by file
 extension), an IIIF Image API service is assumed.""",

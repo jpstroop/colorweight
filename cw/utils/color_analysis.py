@@ -112,16 +112,3 @@ class ImageAnalyzer(object):
                 print(f'BGR: {colors[i][0]}, Offset: {offset}')
             image[:, offset:width] = colors[i][0]
         return image
-
-if __name__ == '__main__':
-    # TODO: Cheap CLI, will do more later.
-    from os.path import dirname
-    from os.path import join
-    from os.path import realpath
-    from sys import argv
-    try:
-        image_path = argv[1]
-    except IndexError:
-        image_path = realpath(join(dirname(realpath(__file__)), '../samples/01_in.jpg'))
-    analyzer = ImageAnalyzer(image_path)
-    analyzer.json()
