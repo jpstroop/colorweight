@@ -4,19 +4,29 @@
 # Command line interface for ./color_analysis.py
 #
 
+
 from argparse import Action
 from argparse import ArgumentError
 from argparse import ArgumentParser
 from argparse import SUPPRESS
-from color_analysis import ImageAnalyzer # TODO: shouldn't this be cw.utils.color_analysis ?
 from cv2 import imwrite
 from errno import EACCES
 from json import dumps
 from os.path import abspath
 from os.path import dirname
 from os.path import isdir
+from os.path import realpath
+from sys import path
 from sys import stdout
 from tempfile import TemporaryFile
+
+# This is necessary so that we can use this as a CLI and a module (unlikely but
+# importing relative to this directory as opposed to ../../cw feels wrong)
+# Nice writeup:
+# https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html#case-2-syspath-could-change
+path.append(abspath(dirname(dirname(dirname(realpath(__file__))))))
+from cw.utils.color_analysis import ImageAnalyzer
+
 
 DESCRIPTION='A simple command line utility for analyzing images by their color.'
 
@@ -144,7 +154,7 @@ class ColorWeightCLI(object):
                 height=self.args.height, width=self.args.width)
             if self.args.output is not None:
                 imwrite(self.args.output, image_data)
-            else: # Probably useless, but keeps CLI the API easy :-)
+            else: # Probably useless, but keeps the API easy :-)
                 print(image_data.tostring())
 
         # JSON or Image?
