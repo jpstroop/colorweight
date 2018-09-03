@@ -17,17 +17,20 @@ image_data = cv2.imread(image_path)
 arr = np.float32(image_data) # a 3d ndarray
 pixels = arr.reshape((-1, 3))
 
-data = []
+def gen_data():
+    data = []
+    for k in range(1, K_MAX+1):
+        compactness, labels, centroids = cv2.kmeans(pixels, k, None, CRITERIA, 10, FLAGS)
+        data.append((k, compactness))
+    return data
 
-for k in range(1, K_MAX+1):
-    compactness, labels, centroids = cv2.kmeans(pixels, k, None, CRITERIA, 10, FLAGS)
-    data.append((k, compactness))
-
-def show_elbow(data):
-    ks = [e[0] for e in data]
-    dist = [e[1] for e in data]
+def show_elbow(kd_data):
+    ks = [e[0] for e in kd_data]
+    dist = [e[1] for e in kd_data]
     plt.plot(ks, dist, 'bo-')
     plt.plot((ks[0], ks[-1]), (dist[0], dist[-1]), 'r--')
+    best = find_best_k(kd_data)
+    plt.plot((best[0]), (best[1]), 'gx', markersize=12, mew=4)
     plt.xlabel('k')
     plt.ylabel('distortion')
     plt.title('elbow showing the optimal k')
@@ -37,8 +40,8 @@ def find_best_k(kd_data, debug=False):
     # kd_data is [(k, dist), (k, dist), ...]
     # See: https://en.wikipedia.org/wiki/Vector_projection
     # and: https://stackoverflow.com/a/37121355/714478
-    dist_curve = [e[1] for e in data]
-    n_points = len(dist_curve)
+    dist_curve = [e[1] for e in kd_data]
+    n_points = len(dist_curve) # TODO: use Ks instead
     all_coords = np.vstack((range(n_points), dist_curve)).T
     first_point = all_coords[0]
     line_vec = all_coords[-1] - first_point
@@ -61,7 +64,25 @@ def find_best_k(kd_data, debug=False):
         print(f'Vector to line: {vec_to_line}')
         print(f'Distance to line: {dist_to_line}')
         print(f'Index of best K: {index_of_best_point}')
-    return data[index_of_best_point]
+    return kd_data[index_of_best_point]
 
-best_k, dist = find_best_k(data)
-print(f'Best K: {best_k} (dist: {dist})')
+kd_data = [
+    (1, 5367333014.24297),
+    (2, 2426019016.0840645),
+    (3, 1414663818.9231436),
+    (4, 887659077.4440181),
+    (5, 653222613.6217169),
+    (6, 544465899.0054665),
+    (7, 449343973.6645793),
+    (8, 375759862.3675634),
+    (9, 326419459.7951351),
+    (10, 295985194.268401),
+    (11, 273129710.4291423),
+    (12, 250031524.84741667),
+    (13, 235171775.23590362),
+    (14, 217344434.72723606),
+    (15, 204413441.83494195),
+    (16, 190263982.8895071)
+]
+
+show_elbow(kd_data)
