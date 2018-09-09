@@ -10,8 +10,7 @@ image_path = '/Users/jstroop/workspace/colorweight/samples/01_in.jpg'
 
 CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 200, 1.0) # consider 1.0; may want lower?
 FLAGS = cv2.KMEANS_RANDOM_CENTERS
-
-K_MAX = 16 # higher (16?) for real use
+K_MAX = 16
 
 image_data = cv2.imread(image_path)
 arr = np.float32(image_data) # a 3d ndarray
@@ -65,24 +64,3 @@ def find_best_k(kd_data, debug=False):
         print(f'Distance to line: {dist_to_line}')
         print(f'Index of best K: {index_of_best_point}')
     return kd_data[index_of_best_point]
-
-kd_data = [
-    (1, 5367333014.24297),
-    (2, 2426019016.0840645),
-    (3, 1414663818.9231436),
-    (4, 887659077.4440181),
-    (5, 653222613.6217169),
-    (6, 544465899.0054665),
-    (7, 449343973.6645793),
-    (8, 375759862.3675634),
-    (9, 326419459.7951351),
-    (10, 295985194.268401),
-    (11, 273129710.4291423),
-    (12, 250031524.84741667),
-    (13, 235171775.23590362),
-    (14, 217344434.72723606),
-    (15, 204413441.83494195),
-    (16, 190263982.8895071)
-]
-
-show_elbow(kd_data)
