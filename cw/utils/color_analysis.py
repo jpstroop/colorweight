@@ -53,7 +53,7 @@ class ImageAnalyzer(object):
     def dominant_colors(self, n_colors=None):
         # See: https://docs.opencv.org/3.4.2/d1/d5c/tutorial_py_kmeans_opencv.html
         if n_colors is None:
-            _, _, labels, centroids = self._find_best_k()
+            n_colors, _, labels, centroids = self._best_k_means_from_cluster_data()
         else:
             _, labels, centroids = self._k_means(n_colors)
 
@@ -96,12 +96,16 @@ class ImageAnalyzer(object):
             plt.xlim([0,256])
         plt.show()
 
+    def _best_k_means_from_cluster_data(self):
+        best_k = self._find_best_k()
+        return list(filter(lambda d: d[0] == best_k, self.cluster_data))[0]
+
     def show_elbow(self):
         ks = [e[0] for e in self.cluster_data]
         dist = [e[1] for e in self.cluster_data]
         plt.plot(ks, dist, 'bo-')
         plt.plot((ks[0], ks[-1]), (dist[0], dist[-1]), 'r--')
-        best = self._find_best_k(self.cluster_data)
+        best = self._best_k_means_from_cluster_data()
         plt.plot((best[0]), (best[1]), 'gx', markersize=12, mew=4)
         plt.xlabel('k')
         plt.ylabel('distortion')
@@ -117,12 +121,12 @@ class ImageAnalyzer(object):
         # returns (compactness, labels, centroids)
         return cv2.kmeans(self.pixels, k, None, CRITERIA, 10, FLAGS)
 
-    def _find_best_k(self, debug=DEBUG):
+    def _find_best_k(self, debug=False):
         # kd_data is [(k, dist, ...), (k, dist, ...), ...]
         # See: https://en.wikipedia.org/wiki/Vector_projection
         # and: https://stackoverflow.com/a/37121355/714478
         dist_curve = [e[1] for e in self.cluster_data]
-        n_points = len(dist_curve) # TODO: use Ks instead
+        n_points = len(self.cluster_data)
         all_coords = np.vstack((range(n_points), dist_curve)).T
         first_point = all_coords[0]
         line_vec = all_coords[-1] - first_point
@@ -133,6 +137,7 @@ class ImageAnalyzer(object):
         vec_to_line = vec_from_first - vec_from_first_parallel
         dist_to_line = np.sqrt(np.sum(vec_to_line ** 2, axis=1))
         index_of_best_point = np.argmax(dist_to_line)
+        best_k = self.cluster_data[index_of_best_point][0]
         if debug:
             print(f'Distortion curve: {dist_curve}')
             print(f'All coords: {all_coords}')
@@ -145,7 +150,8 @@ class ImageAnalyzer(object):
             print(f'Vector to line: {vec_to_line}')
             print(f'Distance to line: {dist_to_line}')
             print(f'Index of best K: {index_of_best_point}')
-        return self.cluster_data[index_of_best_point]
+            print(f'Best K: {best_k}')
+        return best_k
 
     @staticmethod
     def _format_color_for_json(color_entry, total_pixels):
@@ -189,10 +195,12 @@ class ImageAnalyzer(object):
             image[:, offset:width] = colors[i][0]
         return image
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
 #     from cv2 import imwrite
-#     image_path = '/Users/jstroop/workspace/colorweight/samples/01_in.jpg'
-#     ia = ImageAnalyzer(image_path)
+    image_path = '/Users/jstroop/workspace/colorweight/samples/01_in.jpg'
+    ia = ImageAnalyzer(image_path)
+    # Best K elbow graph:
+    ia.show_elbow()
 #     # Dominant Color Image:
 #     # imwrite('/tmp/out.png', ia.viz())
 #     # List structure for JSON:
