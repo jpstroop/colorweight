@@ -88,6 +88,14 @@ class ImageAnalyzer(object):
     def list(self, n_colors=None):
         return self._dominant_colors_list(n_colors=n_colors)
 
+    def show_histogram(self):
+        color = ('b','g','r')
+        for i,col in enumerate(color):
+            histr = cv2.calcHist([self.image_data],[i],None,[256],[0,256])
+            plt.plot(histr,color = col)
+            plt.xlim([0,256])
+        plt.show()
+
     def show_elbow(self):
         ks = [e[0] for e in self.cluster_data]
         dist = [e[1] for e in self.cluster_data]
@@ -181,11 +189,13 @@ class ImageAnalyzer(object):
             image[:, offset:width] = colors[i][0]
         return image
 
-if __name__ == '__main__':
-    from cv2 import imwrite
-    image_path = '/Users/jstroop/workspace/colorweight/samples/01_in.jpg'
-    ia = ImageAnalyzer(image_path)
-    # Dominant Color Image:
-    # imwrite('/tmp/out.png', ia.viz())
-    # List structure for JSON:
-    print(ia.list())
+# if __name__ == '__main__':
+#     from cv2 import imwrite
+#     image_path = '/Users/jstroop/workspace/colorweight/samples/01_in.jpg'
+#     ia = ImageAnalyzer(image_path)
+#     # Dominant Color Image:
+#     # imwrite('/tmp/out.png', ia.viz())
+#     # List structure for JSON:
+#     # print(ia.list())
+#     # Histogram:
+#     ia.show_histogram()
