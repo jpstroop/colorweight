@@ -26,6 +26,7 @@ from tempfile import TemporaryFile
 # https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html#case-2-syspath-could-change
 path.append(abspath(dirname(dirname(dirname(realpath(__file__))))))
 from cw.utils.color_analysis import ImageAnalyzer
+from cw.utils.color_analysis import K_MAX
 
 
 DESCRIPTION='A simple command line utility for analyzing images by their color.'
@@ -49,8 +50,11 @@ by the file extenstion. '.json' or '.png' are supported.""",
     'geometry' : f"""The width and height of the output image. Ignored if
 --output is json. (default: {DEFAULT_WIDTH}x{DEFAULT_HEIGHT})""",
 
-    'colors' : """The number of colors to report, e.g. -c 3 will report the top
-three colors (default: 5)"""
+    'colors' : f"""The number of colors to report, e.g. -c 3 will report the top
+three colors. If this number is not provided, numbers 1-{K_MAX} will be tried
+in order to determine an optimal number. This number of colors will be reported.
+This can take a long time. 
+"""
 }
 
 class GeometryAction(Action):
@@ -127,7 +131,7 @@ class ColorWeightCLI(object):
 
         # Optional
         parser.add_argument('-g', '--geometry', action=GeometryAction)
-        parser.add_argument('-c', '--colors', metavar='NUMBER', dest='n_colors', type=int, default=5, help=HELP['colors'])
+        parser.add_argument('-c', '--colors', metavar='NUMBER', dest='n_colors', type=int, default=None, help=HELP['colors'])
 
         args = parser.parse_args()
         del args.geometry # use args.width and args.height going forward
