@@ -1,4 +1,5 @@
 python*
-images/*
+munge.py
 .DS_Store
 __pycache__
+images/
