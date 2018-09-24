@@ -5,6 +5,8 @@ from json import loads
 from statistics import pvariance
 from typing import List
 
+# TODO: __slots__
+
 @dataclass
 class _CWClass:
     def to_dict(self):
@@ -18,26 +20,39 @@ class _CWClass:
         return list(cls.__dataclass_fields__.keys())
 
     @classmethod
+    def from_dict(cls, d):
+        return cls(*d.values())
+
+    @classmethod
     def from_jsons(cls, jsons):
         fields = cls.fields()
         json_d = loads(jsons)
         object_d = dict([(f, json_d[f]) for f in fields]) # we do this to ensure order
         return cls.from_dict(object_d)
 
-    @classmethod
-    def from_dict(cls, d):
-        return cls(*d.values()) #dammit...
-
 @dataclass
 class ColorVolume(_CWClass):
-    rgb: List[int] # May want this to be an object: Color(r,g,b)
+    # {
+    #   "relative_volume": 0.18552781289506953,
+    #   "rgb": [107,90,63]
+    # }
     relative_volume: float
+    rgb: List[int] # May want this to be an object: Color(r,g,b)
 
 @dataclass
 class Image(_CWClass):
-    source_image: None
-    palette_image: str
+    # {
+    #   "colors": [
+    #     { "relative_volume": 0.7999939143135346, "rgb": [98, 107, 103] },
+    #     { "relative_volume": 0.10508763388510224, "rgb": [53, 25, 22] },
+    #     { "relative_volume": 0.0949184518013632, "rgb": [186, 166, 138] }
+    #   ],
+    #   "palette_image": "0038.png",
+    #   "source_image": "0038.jpg"
+    # },
     colors: List[ColorVolume]
+    palette_image: str
+    source_image: None
     _color_variance: float = None
 
     @property
