@@ -5,7 +5,10 @@ from json import loads
 from statistics import pvariance
 from typing import List
 
-# TODO: __slots__
+# NB: This is a set of models that make it easy to work w/ JSON files. They
+# may need to be re-implemented for SQL or some other persistent storage at
+# some point (e.g. doing the K-Means clustering on image is time intensive,
+# and it would be nice to put those on a job queue.)
 
 @dataclass
 class _CWClass:
@@ -20,18 +23,21 @@ class _CWClass:
         return list(cls.__dataclass_fields__.keys())
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict_or_list(cls, d):
         return cls(*d.values())
 
     @classmethod
     def from_jsons(cls, jsons):
-        fields = cls.fields()
-        json_d = loads(jsons)
-        object_d = dict([(f, json_d[f]) for f in fields]) # we do this to ensure order
-        return cls.from_dict(object_d)
+        json_obj = loads(jsons)
+        if isinstance(json_obj, list):
+            constructor = json_obj
+        else:
+            constructor = dict([(f, json_obj[f]) for f in cls.fields()]) # ensure order
+        return cls.from_dict_or_list(constructor)
 
 @dataclass
 class ColorVolume(_CWClass):
+    __slots__ = ('relative_volume', 'rgb')
     # {
     #   "relative_volume": 0.18552781289506953,
     #   "rgb": [107,90,63]
@@ -41,6 +47,7 @@ class ColorVolume(_CWClass):
 
 @dataclass
 class Image(_CWClass):
+    __slots__ = ('colors', 'palette_image', 'source_image') #, '_color_variance')
     # {
     #   "colors": [
     #     { "relative_volume": 0.7999939143135346, "rgb": [98, 107, 103] },
@@ -49,29 +56,79 @@ class Image(_CWClass):
     #   ],
     #   "palette_image": "0038.png",
     #   "source_image": "0038.jpg"
-    # },
+    # }
     colors: List[ColorVolume]
     palette_image: str
-    source_image: None
-    _color_variance: float = None
+    source_image: str
+    # _color_variance: float = None
 
     @property
     def color_variance(self):
-        if self._color_variance is None:
-            volumes = [c.relative_volume for c in self.colors]
-            self._color_variance = pvariance(volumes)
-        return self._color_variance
+        # TODO: figure out how to memoize w/ dataclass & slots
+        return pvariance([c.relative_volume for c in self.colors])
 
+    @classmethod
+    def from_dict_or_list(cls, d):
+        colors = [ColorVolume(*c.values()) for c in d['colors']]
+        return cls(colors, *list(d.values())[1:])
 
+@dataclass
+class ImageSet(_CWClass):
+    images: List[Image]
 
-# dataclasses:
+    # We could probably make the superclass handle lists; hack in the meantime:
+    def to_jsons(self):
+        return dumps(self.to_dict()['images'])
+
+    @classmethod
+    def from_dict_or_list(cls, l):
+        images = [Image.from_dict_or_list(d) for d in l]
+        return cls(images)
+
+    @staticmethod
+    def from_file(path):
+        pass
+
+# re: dataclasses:
 # https://realpython.com/python-data-classes/
 # https://docs.python.org/3/library/dataclasses.html
 
 if __name__ == "__main__":
-    jsons = '{"relative_volume": 0.18552781289506953, "rgb": [107,90,63]}'
-    print(ColorVolume.from_jsons(jsons))
-    # c = ColorVolume([1,2,3], 1.2)
-    # print(type(c).__dataclass_fields__.keys())
-    # c = Color({'r':1,'g':2,'b':3})
-    # print(ColorVolume.__dataclass_fields__.keys())
+    # jsons = '{"relative_volume": 0.18552781289506953, "rgb": [107,90,63]}'
+    # print(ColorVolume.from_jsons(jsons))
+
+    jsons = '''[
+      {
+        "colors": [
+          { "relative_volume": 0.7175252844500632, "rgb": [138, 118, 85] },
+          { "relative_volume": 0.18552781289506953, "rgb": [107, 90, 63] },
+          { "relative_volume": 0.058847977243994945, "rgb": [46, 37, 33] },
+          { "relative_volume": 0.038098925410872314, "rgb": [195, 170, 144] }
+        ],
+        "palette_image": "0001.png",
+        "source_image": "0001.jpg"
+      },
+      {
+        "colors": [
+          { "relative_volume": 0.5946930555555555, "rgb": [203, 173, 113] },
+          { "relative_volume": 0.22485555555555556, "rgb": [158, 102, 55] },
+          { "relative_volume": 0.1804513888888889, "rgb": [46, 34, 21] }
+        ],
+        "palette_image": "0002.png",
+        "source_image": "0002.jpg"
+      }
+    ]'''
+    i = ImageSet.from_jsons(jsons)
+    print(i)
+    print()
+    print()
+    print(i.to_jsons())
+
+
+    # TODO: is there a way to inspect the __dataclass_fields__ so that
+    # we can do from_dict_or_list in the superclass without knowing the class?
+    # print(ColorVolume.__dataclass_fields__['relative_volume'].type == float)
+    # print(ColorVolume.__dataclass_fields__['rgb'].type == List[int])
+    # print(Image.__dataclass_fields__['colors'].type.__origin__ == list) # True
+    # print(Image.__dataclass_fields__['colors'].type == List[ColorVolume]) # True
+    # print(Image.__dataclass_fields__['colors'].type._name) #  string "List"
