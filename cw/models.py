@@ -2,6 +2,7 @@ from dataclasses import asdict
 from dataclasses import dataclass
 from json import dumps
 from json import loads
+from json import load
 from statistics import pvariance
 from typing import List
 
@@ -16,7 +17,7 @@ class _CWClass:
         return asdict(self)
 
     def to_jsons(self):
-        return dumps(self.to_dict())
+        return dumps(self.to_dict(), sort_keys=True, indent=2)
 
     @classmethod
     def fields(cls):
@@ -74,6 +75,28 @@ class Image(_CWClass):
 
 @dataclass
 class ImageSet(_CWClass):
+    __slots__ = ('colors',)
+    # TODO: also make this a subclass of list, or else find a way to delegate
+    # all list-like methods to .images
+    # [
+    #   {
+    #     "colors": [
+    #       { "relative_volume": 0.7175252844500632, "rgb": [138, 118, 85] },
+    #       // ...
+    #     ],
+    #     "palette_image": "0001.png",
+    #     "source_image": "0001.jpg"
+    #   },
+    #   {
+    #     "colors": [
+    #       { "relative_volume": 0.5946930555555555, "rgb": [203, 173, 113] },
+    #       // ...
+    #     ],
+    #     "palette_image": "0002.png",
+    #     "source_image": "0002.jpg"
+    #   },
+    #   ...
+    # ]
     images: List[Image]
 
     # We could probably make the superclass handle lists; hack in the meantime:
@@ -87,48 +110,15 @@ class ImageSet(_CWClass):
 
     @staticmethod
     def from_file(path):
-        pass
+        with open(path, 'r') as f:
+            d = load(f)
+            set = ImageSet.from_dict_or_list(d)
+        return set
 
 # re: dataclasses:
 # https://realpython.com/python-data-classes/
 # https://docs.python.org/3/library/dataclasses.html
 
 if __name__ == "__main__":
-    # jsons = '{"relative_volume": 0.18552781289506953, "rgb": [107,90,63]}'
-    # print(ColorVolume.from_jsons(jsons))
-
-    jsons = '''[
-      {
-        "colors": [
-          { "relative_volume": 0.7175252844500632, "rgb": [138, 118, 85] },
-          { "relative_volume": 0.18552781289506953, "rgb": [107, 90, 63] },
-          { "relative_volume": 0.058847977243994945, "rgb": [46, 37, 33] },
-          { "relative_volume": 0.038098925410872314, "rgb": [195, 170, 144] }
-        ],
-        "palette_image": "0001.png",
-        "source_image": "0001.jpg"
-      },
-      {
-        "colors": [
-          { "relative_volume": 0.5946930555555555, "rgb": [203, 173, 113] },
-          { "relative_volume": 0.22485555555555556, "rgb": [158, 102, 55] },
-          { "relative_volume": 0.1804513888888889, "rgb": [46, 34, 21] }
-        ],
-        "palette_image": "0002.png",
-        "source_image": "0002.jpg"
-      }
-    ]'''
-    i = ImageSet.from_jsons(jsons)
-    print(i)
-    print()
-    print()
-    print(i.to_jsons())
-
-
-    # TODO: is there a way to inspect the __dataclass_fields__ so that
-    # we can do from_dict_or_list in the superclass without knowing the class?
-    # print(ColorVolume.__dataclass_fields__['relative_volume'].type == float)
-    # print(ColorVolume.__dataclass_fields__['rgb'].type == List[int])
-    # print(Image.__dataclass_fields__['colors'].type.__origin__ == list) # True
-    # print(Image.__dataclass_fields__['colors'].type == List[ColorVolume]) # True
-    # print(Image.__dataclass_fields__['colors'].type._name) #  string "List"
+    set = ImageSet.from_file('/Users/jstroop/workspace/colorweight/data.json')
+    print(set)
