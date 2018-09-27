@@ -63,13 +63,21 @@ class Image(_CWClass):
 class ImageSet(_CWClass):
     __slots__ = ('images',)
     # TODO: also make this a subclass of list, or else find a way to
-    # delegate all list-like methods to .images
-    images: List[Image]
+    # delegate some or all list-like methods to ._images, as below with
+    # __getitem__
+    _images: List[Image]
+
+    def __getitem__(self, position):
+        return self._images[position]
+    def __len__(self):
+        return len(self._images)
+    def __reversed__(self):
+        return self._images[::-1]
 
     # We could probably make the superclass handle lists; hack in the
     # meantime. See above also.
     def to_jsons(self):
-        return dumps(self.to_dict()['images'])
+        return dumps(self.to_dict()['_images'])
 
     @classmethod
     def from_dict_or_list(cls, l):
@@ -85,4 +93,4 @@ class ImageSet(_CWClass):
 
 if __name__ == "__main__":
     set = ImageSet.from_file('/Users/jstroop/workspace/colorweight/data.json')
-    print(set)
+    print(reversed(set))
