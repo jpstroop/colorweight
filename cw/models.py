@@ -61,7 +61,7 @@ class Image(_CWClass):
 
 @dataclass
 class ImageSet(_CWClass):
-    __slots__ = ('images',)
+    __slots__ = ('_images',)
     # TODO: also make this a subclass of list, or else find a way to
     # delegate some or all list-like methods to ._images, as below with
     # __getitem__
