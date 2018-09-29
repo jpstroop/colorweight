@@ -41,8 +41,8 @@ See `util/color_analysis.py` for details and options.
 
  * Install [Pipenv](https://packaging.python.org/tutorials/managing-dependencies/#installing-pipenv): `brew install pipenv`
  * Install dependencies: `pipenv install`
- * Activate the environment: `pipenv shell`
- * Check out the command line interface in `cw/utils/colorweight.py`
+ * Activate the environment: `pipenv shell` or use `pipenv run <command>`,
+ * Check out the command line interface in `cw/utils/colorweight.py` (i.e. `pipenv run python cw/utils/colorweight.py --help`):
 
     ```
      usage: cw/utils/colorweight.py [-h] [-f {png,json} | -o PATH] [-g WxH]
