@@ -73,11 +73,17 @@ class ImageSet(_CWClass):
         return len(self._images)
     def __reversed__(self):
         return self._images[::-1]
+    def append(self, image):
+        self._images.append(image)
 
     # We could probably make the superclass handle lists; hack in the
     # meantime. See above also.
     def to_jsons(self):
-        return dumps(self.to_dict()['_images'])
+        return dumps(self.to_dict()['_images'], sort_keys=True, indent=2)
+
+    def save(self, path):
+        with open(path, 'w') as f:
+            f.write(self.to_jsons())
 
     @classmethod
     def from_dict_or_list(cls, l):

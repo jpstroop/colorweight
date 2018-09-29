@@ -43,6 +43,8 @@ class ImageAnalyzer(object):
 
     @property
     def cluster_data(self):
+        # TODO: Use multiprocessing!
+        # https://www.linuxjournal.com/content/multiprocessing-python
         # runs through the image K_MAX times...can take a while!
         if not self._cluster_data:
             for k in range(1, K_MAX+1):
@@ -73,6 +75,7 @@ class ImageAnalyzer(object):
         palette = np.uint8(centroids)
         # Replace the labels with the value from the palette/centroids
         # giving us: [([B,G,R], freq), ([B,G,R], freq), ...]
+        # return [(palette[f[0]].tolist(), int(f[1])) for f in freq_sorted]
         return [(palette[f[0]], f[1]) for f in freq_sorted]
 
     def viz(self, n_colors=None, height=100, width=400, weighted=True, debug=DEBUG):
@@ -85,7 +88,7 @@ class ImageAnalyzer(object):
             pixels = ImageAnalyzer._viz_unweighted(image, colors, width, debug)
         return pixels
 
-    def list(self, n_colors=None):
+    def dominant_colors_list(self, n_colors=None):
         return self._dominant_colors_list(n_colors=n_colors)
 
     def show_histogram(self):

@@ -13,7 +13,7 @@ from requests import get
 
 class ImageCollector(object):
 
-    def __init__(self, manifest_uri, iiif_params='/full/!1024,1024/0/default.jpg'):
+    def __init__(self, manifest_uri, iiif_params='/full/!800,800/0/default.jpg'):
         self.manifest_uri = manifest_uri
         self.iiif_params = iiif_params
         self._iiif_collection = None
@@ -22,7 +22,7 @@ class ImageCollector(object):
     @property
     def images_dir(self):
         if self._images_dir is None:
-            self._images_dir = realpath(join(dirname(realpath(__file__)), '..', 'images'))
+            self._images_dir = realpath(join(dirname(realpath(__file__)), '..', 'images', 'ga'))
             makedirs(self._images_dir, exist_ok=True)
         return self._images_dir
 
@@ -83,8 +83,8 @@ SOVIET_SHEET_MUSIC = '058c1862-30dc-431c-90b5-4e141282c7a1'
 SOVIET_CHILDRENS_BOOKS = '0f9c665a-a16c-4cf3-a29e-1c2077222e0b'
 
 def figgy_iiif_uri(id):
-    return "{}{}{}".format(PUL_COLLECTIONS, id, MANIFEST)
+    return f'{PUL_COLLECTIONS}{id}{MANIFEST}'
 
 if __name__ == '__main__':
-    image_collector = ImageCollector(figgy_iiif_uri(SOVIET_CHILDRENS_BOOKS))
+    image_collector = ImageCollector(figgy_iiif_uri(GA))
     image_collector.download_thumbnails()
