@@ -3,3 +3,4 @@ munge.py
 .DS_Store
 __pycache__
 images/
+timing.md

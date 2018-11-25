@@ -53,7 +53,7 @@ by the file extenstion. '.json' or '.png' are supported.""",
     'colors' : f"""The number of colors to report, e.g. -c 3 will report the top
 three colors. If this number is not provided, numbers 1-{K_MAX} will be tried
 in order to determine an optimal number. This number of colors will be reported.
-This can take a long time. 
+This can take a long time.
 """
 }
 
@@ -150,7 +150,7 @@ class ColorWeightCLI(object):
             outstream = stdout
             if self.args.output is not None:
                 outstream = open(self.args.output, 'w')
-            data = analyzer.list(n_colors=self.args.n_colors)
+            data = analyzer.dominant_colors_list(n_colors=self.args.n_colors)
             json_s = dumps(data, indent=2, sort_keys=True)
             print(json_s, file=outstream)
         else:
